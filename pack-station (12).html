@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pack Station</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+:root {
+  --bg:#f5f4f0; --surface:#fff; --surface2:#f9f8f5;
+  --border:#e2dfd8; --border2:#ede9e3;
+  --navy:#1a3a5c; --navy2:#0f2540;
+  --green:#059669; --green-bg:#f0fdf4; --green-bd:#6ee7b7;
+  --red:#dc2626;   --red-bg:#fee2e2;   --red-bd:#fca5a5;
+  --amber:#d97706; --amber-bg:#fef3c7; --amber-bd:#fcd34d;
+  --blue:#2563eb;  --blue-bg:#eff6ff;  --blue-bd:#bfdbfe;
+  --text:#111827; --text2:#6b7280; --text3:#9ca3af;
+  --mono:'IBM Plex Mono',monospace; --sans:'Sarabun',sans-serif;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 12px rgba(0,0,0,.05);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:var(--sans); background:var(--bg); color:var(--text);
+  height:100vh; overflow:hidden;
+  display:grid;
+  grid-template-rows:56px 1fr;
+  grid-template-columns:340px 1fr 260px;
+  grid-template-areas:"hd hd hd" "lp mp rp";
+}
+
+/* ── HEADER ── */
+header{
+  grid-area:hd; background:var(--navy); color:#fff;
+  display:flex; align-items:center; padding:0 18px; gap:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.2); z-index:10;
+}
+.logo{font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.06em;}
+.logo span{color:rgba(255,255,255,.4);font-weight:400;}
+.hd-sep{width:1px;height:18px;background:rgba(255,255,255,.2);}
+.hd-order{font-size:12px;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px;}
+.hd-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.status-pill{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  border-radius:20px;padding:4px 11px;font-size:11px;color:rgba(255,255,255,.7);
+}
+.sdot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.3);flex-shrink:0;}
+.sdot.on{background:#4ade80;box-shadow:0 0 5px #4ade80;}
+.btn-hd{
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  border-radius:7px;padding:5px 11px;font-size:12px;color:rgba(255,255,255,.75);
+  cursor:pointer;font-family:var(--sans);transition:.2s;
+}
+.btn-hd:hover{background:rgba(255,255,255,.2);}
+
+/* ── LEFT PANEL ── */
+.lp{grid-area:lp;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+
+.lp-top{padding:14px 16px 10px;border-bottom:1px solid var(--border);}
+.ptag{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:5px;}
+.inv-serial{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--navy);}
+.inv-meta{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.5;}
+
+.prog-wrap{padding:10px 16px;border-bottom:1px solid var(--border);}
+.prog-info{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:5px;}
+.prog-info strong{font-family:var(--mono);font-weight:600;color:var(--navy);}
+.prog-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--navy);border-radius:3px;transition:width .4s ease;width:0;}
+
+.item-list{flex:1;overflow-y:auto;padding:8px;}
+.item-list::-webkit-scrollbar{width:3px;}
+.item-list::-webkit-scrollbar-thumb{background:var(--border);}
+
+.item-row{
+  display:grid;grid-template-columns:28px 1fr auto;
+  align-items:center;gap:8px;
+  padding:8px 10px;border-radius:8px;margin-bottom:3px;
+  border:1px solid var(--border);background:var(--surface2);transition:.2s;
+}
+.item-row.complete{background:var(--green-bg);border-color:var(--green-bd);}
+.item-row.over{background:var(--red-bg);border-color:var(--red-bd);}
+.item-row.partial{background:var(--amber-bg);border-color:var(--amber-bd);}
+.i-check{
+  width:28px;height:28px;border-radius:6px;
+  border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:600;color:var(--text3);transition:.2s;flex-shrink:0;
+}
+.item-row.complete .i-check{background:var(--green);border-color:var(--green);color:#fff;}
+.item-row.over     .i-check{background:var(--red);border-color:var(--red);color:#fff;}
+.item-row.partial  .i-check{background:var(--amber);border-color:var(--amber);color:#fff;}
+.i-name{font-size:11.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;}
+.i-sku{font-family:var(--mono);font-size:9.5px;color:var(--text3);margin-top:1px;}
+.i-count{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text3);white-space:nowrap;text-align:right;min-width:48px;}
+.item-row.complete .i-count{color:var(--green);}
+.item-row.over     .i-count{color:var(--red);}
+.item-row.partial  .i-count{color:var(--amber);}
+
+/* ── MAIN PANEL ── */
+.mp{grid-area:mp;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+
+/* Invoice loader section */
+.inv-loader{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:16px 20px;
+  box-shadow:0 1px 4px rgba(0,0,0,.05);
+}
+.il-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
+.il-row{display:flex;gap:8px;align-items:center;}
+#invoiceInput{
+  flex:1;border:1.5px solid var(--border);border-radius:9px;
+  padding:10px 14px;font-family:var(--mono);font-size:14px;font-weight:600;
+  color:var(--navy);outline:none;background:var(--surface2);transition:.2s;
+  letter-spacing:.03em;
+}
+#invoiceInput:focus{border-color:var(--navy);background:#fff;}
+#invoiceInput::placeholder{color:var(--text3);font-weight:400;font-size:12px;font-family:var(--sans);letter-spacing:0;}
+.btn-load{
+  background:var(--navy);color:#fff;border:none;border-radius:8px;
+  padding:10px 18px;font-family:var(--sans);font-size:13px;font-weight:600;
+  cursor:pointer;white-space:nowrap;transition:.15s;display:flex;align-items:center;gap:7px;
+}
+.btn-load:hover{background:var(--navy2);}
+.btn-load:disabled{opacity:.5;cursor:not-allowed;}
+.il-hint{font-size:11px;color:var(--text3);margin-top:7px;}
+.il-hint strong{color:var(--navy);font-weight:600;}
+
+/* Scan zone */
+.scan-zone{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:24px 20px;
+}
+.scan-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:32px 36px;
+  width:100%;max-width:440px;
+  box-shadow:var(--shadow);
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+}
+.scan-ring{
+  width:90px;height:90px;border-radius:50%;
+  border:2px solid var(--border);background:var(--surface2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;transition:.3s;
+}
+.scan-ring.scanning{border-color:var(--navy);animation:pulse 1.8s ease infinite;}
+.scan-ring.ok  {border-color:var(--green);background:var(--green-bg);animation:none;}
+.scan-ring.bad {border-color:var(--red);background:var(--red-bg);animation:shake .4s ease;}
+.scan-ring.warn{border-color:var(--amber);background:var(--amber-bg);animation:none;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(26,58,92,.2)}70%{box-shadow:0 0 0 14px rgba(26,58,92,0)}100%{box-shadow:0 0 0 0 rgba(26,58,92,0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.scan-hint{font-size:13px;color:var(--text2);text-align:center;line-height:1.6;}
+#scanInput{
+  width:100%;border:2px solid var(--border);border-radius:10px;
+  padding:12px 16px;font-family:var(--mono);font-size:17px;font-weight:600;
+  color:var(--navy);outline:none;transition:.2s;text-align:center;letter-spacing:.04em;
+  background:var(--surface2);
+}
+#scanInput:focus{border-color:var(--navy);background:#fff;}
+#scanInput::placeholder{color:var(--text3);font-weight:400;font-size:13px;font-family:var(--sans);letter-spacing:0;}
+#scanInput:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ── RIGHT PANEL ── */
+.rp{grid-area:rp;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.rp-hd{padding:12px 14px 8px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.rp-title{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);}
+.btn-clr{background:none;border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:10px;color:var(--text3);cursor:pointer;font-family:var(--sans);transition:.2s;}
+.btn-clr:hover{border-color:var(--red);color:var(--red);}
+.log-list{flex:1;overflow-y:auto;padding:6px;}
+.log-list::-webkit-scrollbar{width:3px;}
+.log-list::-webkit-scrollbar-thumb{background:var(--border);}
+.log-entry{padding:6px 8px;border-radius:6px;margin-bottom:3px;border-left:2px solid transparent;animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:translateX(0)}}
+.log-entry.ok  {border-left-color:var(--green);background:var(--green-bg);}
+.log-entry.bad {border-left-color:var(--red);background:var(--red-bg);}
+.log-entry.warn{border-left-color:var(--amber);background:var(--amber-bg);}
+.log-entry.info{border-left-color:var(--border);background:var(--surface2);}
+.log-sku{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--navy);}
+.log-msg{font-size:10.5px;color:var(--text2);margin-top:1px;}
+.log-time{font-family:var(--mono);font-size:9.5px;color:var(--text3);margin-top:1px;}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;top:66px;left:50%;
+  transform:translateX(-50%) translateY(-14px);
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:11px 18px;
+  font-size:13px;font-weight:500;
+  box-shadow:0 4px 20px rgba(0,0,0,.11);
+  display:flex;align-items:center;gap:8px;
+  opacity:0;pointer-events:none;transition:.22s ease;z-index:100;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.ok  {border-color:var(--green-bd);color:var(--green);}
+.toast.bad {border-color:var(--red-bd);color:var(--red);}
+.toast.warn{border-color:var(--amber-bd);color:var(--amber);}
+.toast.info{border-color:var(--blue-bd);color:var(--blue);}
+
+/* ── COMPLETE OVERLAY ── */
+.overlay{position:fixed;inset:0;background:rgba(15,20,30,.5);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:.3s;}
+.overlay.show{opacity:1;pointer-events:all;}
+.cc{background:var(--surface);border-radius:20px;border:1px solid var(--green-bd);padding:44px 52px;text-align:center;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.14);}
+.cc-icon{font-size:48px;animation:pop .4s ease;margin-bottom:14px;}
+@keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+.cc-title{font-size:20px;font-weight:700;color:var(--green);margin-bottom:5px;}
+.cc-sub{font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.6;}
+.btn-next{background:var(--navy);color:#fff;border:none;border-radius:10px;padding:12px;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:.15s;}
+.btn-next:hover{background:var(--navy2);}
+
+/* ── SETTINGS MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(15,20,30,.4);display:flex;align-items:center;justify-content:center;z-index:300;opacity:0;pointer-events:none;transition:.22s;}
+.modal-bg.show{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border-radius:16px;padding:26px 28px;width:420px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.14);}
+.modal h2{font-size:15px;font-weight:600;color:var(--navy);margin-bottom:18px;}
+.mf{margin-bottom:11px;}
+.mf label{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;letter-spacing:.05em;text-transform:uppercase;}
+.mf input,.mf select{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-family:var(--mono);font-size:12.5px;color:var(--navy);background:#fff;outline:none;transition:.2s;}
+.mf input:focus,.mf select:focus{border-color:var(--navy);}
+.mf select{font-family:var(--sans);cursor:pointer;}
+.info-box{background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:8px;padding:9px 11px;font-size:11px;color:#1e40af;line-height:1.7;margin-top:4px;}
+.mactions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+.btn-cancel{background:none;border:1.5px solid var(--border);border-radius:8px;padding:8px 16px;color:var(--text2);font-family:var(--sans);font-size:13px;cursor:pointer;transition:.2s;}
+.btn-cancel:hover{border-color:var(--text2);}
+.btn-save{background:var(--navy);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:.15s;}
+.btn-save:hover{background:var(--navy2);}
+
+/* empty state */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px;text-align:center;color:var(--text3);gap:8px;}
+.empty-icon{font-size:28px;opacity:.4;}
+.empty-text{font-size:11.5px;line-height:1.7;}
+
+/* spinner */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">Pack<span>Station</span></div>
+  <div class="hd-sep"></div>
+  <div class="hd-order" id="hdOrder">ยังไม่มีใบกำกับ</div>
+  <div class="hd-right">
+    <button class="btn-hd" onclick="document.getElementById('settingsModal').classList.add('show')">⚙ ตั้งค่า API</button>
+    <div class="status-pill">
+      <div class="sdot" id="sdot"></div>
+      <span id="slabel">ยังไม่ได้ตั้งค่า</span>
+    </div>
+  </div>
+</header>
+
+<!-- LEFT: รายการสินค้า -->
+<div class="lp">
+  <div class="lp-top">
+    <div class="ptag">ใบกำกับภาษี</div>
+    <div class="inv-serial" id="invSerial">—</div>
+    <div class="inv-meta" id="invMeta">พิมพ์เลขที่ใบกำกับด้านบน แล้วกด โหลด</div>
+  </div>
+  <div class="prog-wrap" id="progWrap" style="display:none">
+    <div class="prog-info"><span>ความคืบหน้า</span><strong id="progText">0/0</strong></div>
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+  </div>
+  <div class="item-list" id="itemList">
+    <div class="empty"><div class="empty-icon">📋</div><div class="empty-text">โหลดใบกำกับก่อน<br>เพื่อดูรายการสินค้า</div></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="mp">
+
+
+
+  <!-- Scan zone -->
+  <div class="scan-zone">
+    <div class="scan-card">
+      <div class="scan-ring" id="scanRing">📦</div>
+      <div class="scan-hint" id="scanHint">
+        โหลดใบกำกับก่อน<br>แล้วค่อยสแกนบาร์โค้ดสินค้า
+      </div>
+      <input type="text" id="scanInput"
+        placeholder="สแกน barcode ใบกำกับ หรือ สินค้า..."
+        autocomplete="off" />
+    </div>
+  </div>
+
+</div>
+
+<!-- RIGHT: Log -->
+<div class="rp">
+  <div class="rp-hd">
+    <div class="rp-title">บันทึกการสแกน</div>
+    <button class="btn-clr" onclick="clearLog()">ล้าง</button>
+  </div>
+  <div class="log-list" id="logList">
+    <div class="empty" style="padding:24px 12px">
+      <div class="empty-icon" style="font-size:22px">📝</div>
+      <div class="empty-text" style="font-size:10.5px">ประวัติการสแกนจะแสดงที่นี่</div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- COMPLETE OVERLAY -->
+<div class="overlay" id="completeOverlay">
+  <div class="cc">
+    <div class="cc-icon">✅</div>
+    <div class="cc-title">แพ็คครบแล้ว!</div>
+    <div class="cc-sub" id="ccSub">ทุกรายการถูกต้อง พร้อมปิดกล่องได้เลย</div>
+    <button class="btn-next" onclick="reset()">ออเดอร์ถัดไป →</button>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-bg" id="settingsModal">
+  <div class="modal">
+    <h2>⚙ ตั้งค่า FlowAccount API</h2>
+    <div class="mf">
+      <label>โหมด</label>
+      <select id="apiMode">
+        <option value="demo">🧪 Demo — ข้อมูลจำลอง (ทดสอบ)</option>
+        <option value="sandbox">🟡 Sandbox — ทดสอบกับ FlowAccount Sandbox</option>
+        <option value="live">🔴 Live — Production จริง</option>
+      </select>
+    </div>
+    <div class="mf">
+      <label>Cloudflare Worker URL</label>
+      <input type="text" id="workerUrl" placeholder="https://xxx.workers.dev" />
+      <div style="font-size:11px;color:var(--text2);margin-top:4px;">
+        ใส่ Worker URL จาก Cloudflare เช่น<br>
+        <code>https://ancient-truth-e75a.knvetsupply.workers.dev</code>
+      </div>
+    </div>
+    <div class="mf">
+      <label>Environment Path</label>
+      <select id="apiEnv" style="font-family:var(--sans);cursor:pointer;">
+        <option value="/test">🟡 Sandbox (/test)</option>
+        <option value="/v1">🔴 Production (/v1)</option>
+      </select>
+    </div>
+    <div class="mf">
+      <label>Client ID</label>
+      <input type="text" id="cfClientId" placeholder="your-client-id" />
+    </div>
+    <div class="mf">
+      <label>Client Secret</label>
+      <input type="password" id="cfClientSecret" placeholder="your-client-secret" />
+    </div>
+    <div class="info-box">
+      ✅ Token จะถูกขอและ refresh <strong>อัตโนมัติ</strong><br>
+      📌 ขอ Client ID/Secret ได้ที่ <strong>developers.flowaccount.com</strong>
+    </div>
+    <div class="mactions">
+      <button class="btn-cancel" onclick="document.getElementById('settingsModal').classList.remove('show')">ยกเลิก</button>
+      <button class="btn-save" onclick="saveSettings()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let cfg = JSON.parse(localStorage.getItem('psCfg') || '{"mode":"demo","env":"/test","workerUrl":"","cid":"","cs":"","token":"","texp":0}');
+let invoice   = null;  // { serial, contactName, publishedOn, items:[{sku,name,qty}] }
+let scanned   = {};    // { sku: count }
+let logEmpty  = true;
+
+// ══════════════════════════════════════════════════════════════
+// DEMO DATA
+// ══════════════════════════════════════════════════════════════
+const DEMO = {
+  'INV001605': {
+    serial:'INV001605', contactName:'โรงพยาบาลสัตว์หทัยรักษ์', publishedOn:'21/05/2026',
+    items:[
+      {sku:'SIL-6FR', name:'Silicone Foley Catheter 6Fr (Stainless Stylet)', qty:2},
+      {sku:'SIL-8FR', name:'Silicone Foley Catheter 8Fr (Stainless Stylet)', qty:2},
+      {sku:'HIVAN-50', name:'HIVAN หน้ากากอนามัย 50 ชิ้น/กล่อง', qty:2},
+      {sku:'ZIP-9X13', name:'ถุงซิปล็อค (สีขา) 9 x 13 ซม.', qty:1},
+      {sku:'ZIP-12X17',name:'ถุงซิปล็อค (สีขา) 12 x 17 ซม.', qty:1},
+    ]
+  },
+  'INV2024100001': {
+    serial:'INV2024100001', contactName:'บริษัท สมศรี จำกัด', publishedOn:'01/10/2567',
+    items:[
+      {sku:'SKU-001', name:'สบู่ก้อน ฟองนุ่ม 100g', qty:3},
+      {sku:'SKU-002', name:'แชมพูสมุนไพร 250ml', qty:2},
+      {sku:'SKU-003', name:'ครีมบำรุงผิว 50ml', qty:1},
+      {sku:'SKU-004', name:'ลิปบาล์มมะพร้าว', qty:4},
+    ]
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// TOKEN AUTO-REFRESH
+// ══════════════════════════════════════════════════════════════
+async function getToken() {
+  if (cfg.mode === 'demo') return 'demo';
+  const now = Date.now();
+  if (cfg.token && cfg.texp && now < cfg.texp - 300000) return cfg.token;
+  if (!cfg.cid || !cfg.cs) {
+    document.getElementById('settingsModal').classList.add('show');
+    toast('กรุณาตั้งค่า Client ID/Secret ก่อน','bad','✗'); return null;
+  }
+  try {
+    setStatus('loading','กำลังขอ token...');
+    const apiBase = (cfg.workerUrl && cfg.workerUrl.startsWith('http') ? cfg.workerUrl : 'https://openapi.flowaccount.com') + (cfg.env || '/test');
+    const r = await fetch(apiBase + '/token',{
+      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body: new URLSearchParams({grant_type:'client_credentials',scope:'flowaccount-api',client_id:cfg.cid,client_secret:cfg.cs})
+    });
+    if (!r.ok) { setStatus('err','Client ID/Secret ผิด'); toast('Client ID/Secret ไม่ถูกต้อง','bad','✗'); return null; }
+    const j = await r.json();
+    cfg.token = j.access_token;
+    cfg.texp  = Date.now() + (j.expires_in||3600)*1000;
+    localStorage.setItem('psCfg', JSON.stringify(cfg));
+    setStatus('on','Token ใหม่ · '+Math.round((j.expires_in||3600)/60)+' นาที');
+    return cfg.token;
+  } catch(e) { setStatus('err','เชื่อมต่อไม่ได้'); toast('เชื่อมต่อ FlowAccount ไม่ได้','bad','✗'); return null; }
+}
+
+// ══════════════════════════════════════════════════════════════
+// LOAD INVOICE FROM FLOWACCOUNT API
+// ══════════════════════════════════════════════════════════════
+async function smartLoadInvoice(serial) {
+  // เรียกจาก scan input โดยตรง
+  document.getElementById('invoiceInput') && (document.getElementById('invoiceInput').value = serial);
+  await loadInvoice(serial);
+}
+
+async function loadInvoice(overrideSerial) {
+  const q = overrideSerial || (document.getElementById('invoiceInput') ? document.getElementById('invoiceInput').value.trim() : '');
+  if (!q) return;
+
+  const btn   = document.getElementById('btnLoad');
+  const label = document.getElementById('btnLoadLabel');
+  btn.disabled = true;
+  label.innerHTML = '<div class="spin"></div>';
+
+  let data;
+
+  if (cfg.mode === 'demo') {
+    await new Promise(r => setTimeout(r,500));
+    // ลอง match ทั้ง key ตรงและ normalize
+    data = DEMO[q] || DEMO[q.toUpperCase()] ||
+           Object.values(DEMO).find(d => d.serial === q || d.serial === q.toUpperCase());
+    if (!data) {
+      // ถ้าไม่พบ สร้าง demo จากชื่อ query
+      data = { ...DEMO['INV2024100001'], serial: q };
+    }
+  } else {
+    const token = await getToken();
+    if (!token) { btn.disabled=false; label.textContent='โหลด'; return; }
+
+    const base = (cfg.workerUrl && cfg.workerUrl.startsWith('http') ? cfg.workerUrl : 'https://openapi.flowaccount.com') + (cfg.env || '/test');
+    // รองรับทั้ง documentId (ตัวเลข) และ serial (ตัวอักษร)
+    const isId = /^\d+$/.test(q);
+    const url  = isId
+      ? `${base}/tax-invoices/${q}`
+      : `${base}/tax-invoices?documentSerial=${encodeURIComponent(q)}&page=1&limit=1`;
+
+    try {
+      const r = await fetch(url, { headers:{'Authorization':'Bearer '+token} });
+      if (!r.ok) {
+        toast('ไม่พบใบกำกับ ('+r.status+')','bad','✗');
+        btn.disabled=false; label.textContent='โหลด'; return;
+      }
+      const j   = await r.json();
+    const raw = isId ? j.data : (j.data?.list?.[0] || j.data?.items?.[0]);
+      if (!raw) { toast('ไม่พบเอกสาร '+q,'bad','✗'); btn.disabled=false; label.textContent='โหลด'; return; }
+
+      data = {
+        serial:      raw.documentSerial,
+        contactName: raw.contactName,
+        publishedOn: (raw.publishedOn||'').substring(0,10),
+        items: (raw.productItems || raw.items || []).map(it => ({
+          sku:  it.barcode || it.sku || it.productCode || String(it.id || it.productId || '?'),
+          name: it.productName || it.name || it.description || '—',
+          qty:  parseInt(it.qty || it.quantity || 1, 10),
+        }))
+      };
+    } catch(e) {
+      toast('เชื่อมต่อ API ไม่ได้','bad','✗');
+      btn.disabled=false; label.textContent='โหลด'; return;
+    }
+  }
+
+  btn.disabled=false; label.textContent='โหลด';
+
+  // Set invoice
+  invoice  = data;
+  scanned  = {};
+  data.items.forEach(it => { scanned[it.sku] = 0; });
+
+  renderAll();
+  document.getElementById('scanInput').disabled = false;
+  document.getElementById('scanInput').focus();
+  document.getElementById('scanRing').className = 'scan-ring scanning';
+  document.getElementById('scanHint').textContent = 'พร้อมสแกนสินค้า หรือสแกนใบกำกับใหม่';
+  document.getElementById('hdOrder').textContent = data.contactName + ' · ' + data.serial;
+  toast('โหลด '+data.serial+' แล้ว · '+data.items.length+' รายการ','ok','📋');
+  addLog('info', data.serial, 'โหลดใบกำกับจาก FlowAccount · '+data.items.length+' รายการ');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SCAN PRODUCT
+// ══════════════════════════════════════════════════════════════
+function processScan(barcode) {
+  if (!invoice) return;
+
+  const item = invoice.items.find(it =>
+    it.sku === barcode ||
+    it.sku.toLowerCase() === barcode.toLowerCase()
+  );
+
+  if (!item) {
+    toast('ไม่พบสินค้าในใบกำกับ: '+barcode,'bad','✗');
+    addLog('bad', barcode, 'ไม่พบใน Invoice');
+    flashRing('bad'); beep('error');
+    return;
+  }
+
+  scanned[item.sku] = (scanned[item.sku]||0) + 1;
+  const cur = scanned[item.sku], req = item.qty;
+
+  if (cur < req) {
+    toast(item.name+' · '+cur+'/'+req,'ok','✓');
+    addLog('ok', item.sku, item.name+' — สแกนแล้ว '+cur+'/'+req);
+    flashRing('ok'); beep('ok');
+  } else if (cur === req) {
+    toast('✓ ครบ! '+item.name,'ok','✅');
+    addLog('ok', item.sku, item.name+' — ✓ ครบ '+req+'/'+req);
+    flashRing('ok'); beep('complete');
+  } else {
+    toast('⚠ เกิน! '+item.name+' ('+cur+'/'+req+')','warn','⚠');
+    addLog('warn', item.sku, item.name+' — ⚠ เกิน '+cur+'/'+req);
+    flashRing('warn'); beep('warn');
+  }
+
+  renderAll();
+  checkDone();
+}
+
+function checkDone() {
+  if (!invoice) return;
+  if (invoice.items.every(it => (scanned[it.sku]||0) === it.qty)) {
+    setTimeout(() => {
+      document.getElementById('ccSub').textContent = invoice.serial+' · '+invoice.items.length+' รายการ ครบถ้วนทั้งหมด';
+      document.getElementById('completeOverlay').classList.add('show');
+      beep('done');
+    }, 400);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════
+function renderAll() {
+  if (!invoice) return;
+  document.getElementById('invSerial').textContent = invoice.serial;
+  document.getElementById('btnChange').style.display = '';
+  document.getElementById('invMeta').textContent = invoice.contactName + ' · ' + invoice.publishedOn;
+  document.getElementById('progWrap').style.display = '';
+
+  const total = invoice.items.length;
+  const done  = invoice.items.filter(it => (scanned[it.sku]||0) === it.qty).length;
+  document.getElementById('progFill').style.width = (total>0?done/total*100:0)+'%';
+  document.getElementById('progText').textContent = done+'/'+total+' รายการ';
+
+  const list = document.getElementById('itemList');
+  list.innerHTML = '';
+  invoice.items.forEach(item => {
+    const s = scanned[item.sku]||0;
+    let state='', icon='·';
+    if (s===item.qty)     { state='complete'; icon='✓'; }
+    else if (s>item.qty)  { state='over';     icon='!'; }
+    else if (s>0)         { state='partial';  icon=s;   }
+
+    const row = document.createElement('div');
+    row.className = 'item-row '+state;
+    row.innerHTML = `
+      <div class="i-check">${icon}</div>
+      <div>
+        <div class="i-name">${item.name}</div>
+        <div class="i-sku">${item.sku}</div>
+      </div>
+      <div class="i-count">${s}/${item.qty}</div>`;
+    list.appendChild(row);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// RESET
+// ══════════════════════════════════════════════════════════════
+function reset() {
+  invoice = null; scanned = {};
+  document.getElementById('completeOverlay').classList.remove('show');
+  document.getElementById('invSerial').textContent = '—';
+  document.getElementById('invMeta').textContent = 'สแกน barcode บนใบกำกับเพื่อเริ่ม';
+  document.getElementById('hdOrder').textContent = 'ยังไม่มีใบกำกับ';
+  document.getElementById('progWrap').style.display = 'none';
+  document.getElementById('scanInput').disabled = true;
+  document.getElementById('scanRing').className = 'scan-ring';
+  document.getElementById('scanHint').textContent = 'สแกน barcode บนใบกำกับเพื่อเริ่ม';
+  document.getElementById('itemList').innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">โหลดใบกำกับก่อน<br>เพื่อดูรายการสินค้า</div></div>';
+  document.getElementById('invoiceInput').focus();
+}
+
+// ══════════════════════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════════════════════
+function saveSettings() {
+  cfg = {
+    mode: document.getElementById('apiMode').value,
+    workerUrl: document.getElementById('workerUrl').value.trim().replace(/\/+$/, ''),
+    env:  document.getElementById('apiEnv').value.trim() || '/test',
+    cid:  document.getElementById('cfClientId').value.trim(),
+    cs:   document.getElementById('cfClientSecret').value.trim(),
+    token:'', texp:0
+  };
+  localStorage.setItem('psCfg', JSON.stringify(cfg));
+  document.getElementById('settingsModal').classList.remove('show');
+  updateStatus();
+  toast('บันทึกแล้ว — Token จะถูกขออัตโนมัติ','ok','✓');
+}
+
+function updateStatus() {
+  if (cfg.mode==='demo') { setStatus('on','Demo Mode'); return; }
+  if (cfg.cid && cfg.cs) {
+    const rem = cfg.texp ? Math.max(0,Math.round((cfg.texp-Date.now())/60000)) : 0;
+    setStatus('on', rem>0 ? 'Token '+rem+' นาที' : 'พร้อมเชื่อมต่อ');
+  } else { setStatus('','ยังไม่ได้ตั้งค่า'); }
+}
+
+function setStatus(s, label) {
+  document.getElementById('sdot').className  = 'sdot'+(s==='on'?' on':'');
+  document.getElementById('slabel').textContent = label;
+}
+
+// ══════════════════════════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════════════════════════
+function toast(msg, type, icon) {
+  const el = document.getElementById('toast');
+  el.className = 'toast '+type+' show';
+  el.innerHTML = '<span>'+icon+'</span><span>'+msg+'</span>';
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), 2600);
+}
+
+function addLog(type, sku, msg) {
+  const list = document.getElementById('logList');
+  if (logEmpty) { list.innerHTML=''; logEmpty=false; }
+  const time = new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const e = document.createElement('div');
+  e.className = 'log-entry '+type;
+  e.innerHTML = '<div class="log-sku">'+sku+'</div><div class="log-msg">'+msg+'</div><div class="log-time">'+time+'</div>';
+  list.insertBefore(e, list.firstChild);
+}
+
+function clearLog() {
+  document.getElementById('logList').innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon" style="font-size:22px">📝</div><div class="empty-text" style="font-size:10.5px">ล้างบันทึกแล้ว</div></div>';
+  logEmpty=true;
+}
+
+function flashRing(s) {
+  const r = document.getElementById('scanRing');
+  r.className = 'scan-ring '+s;
+  setTimeout(()=>r.className='scan-ring scanning', 650);
+}
+
+let actx;
+function beep(t) {
+  try {
+    if (!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.connect(g); g.connect(actx.destination);
+    const c={ok:{f:880,d:.08,v:.12},complete:{f:1046,d:.15,v:.17},error:{f:220,d:.28,v:.17},warn:{f:440,d:.2,v:.17},done:{f:1318,d:.4,v:.2}}[t]||{f:880,d:.08,v:.12};
+    o.frequency.value=c.f; o.type='sine';
+    g.gain.setValueAtTime(c.v,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+c.d);
+    o.start(); o.stop(actx.currentTime+c.d);
+  } catch(e){}
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+function changeInvoice() {
+  // Reset และ focus ที่ช่อง invoice input
+  invoice = null; scanned = {};
+  document.getElementById('scanInput').disabled = true;
+  document.getElementById('scanRing').className = 'scan-ring';
+  document.getElementById('scanHint').textContent = 'สแกน barcode บนใบกำกับเพื่อเริ่ม';
+  document.getElementById('itemList').innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">โหลดใบกำกับก่อน<br>เพื่อดูรายการสินค้า</div></div>';
+  document.getElementById('progWrap').style.display = 'none';
+  document.getElementById('invSerial').textContent = '—';
+  document.getElementById('invMeta').textContent = 'สแกน barcode บนใบกำกับเพื่อเริ่ม';
+  document.getElementById('hdOrder').textContent = 'ยังไม่มีใบกำกับ';
+  document.getElementById('btnChange').style.display = 'none';
+  document.getElementById('scanInput').value = '';
+  document.getElementById('scanInput').focus();
+}
+
+function init() {
+  document.getElementById('apiMode').value    = cfg.mode||'demo';
+  document.getElementById('workerUrl').value  = cfg.workerUrl||'';
+  document.getElementById('apiEnv').value     = cfg.env||'/test';
+  document.getElementById('cfClientId').value = cfg.cid||'';
+  document.getElementById('cfClientSecret').value = cfg.cs||'';
+  updateStatus();
+
+  // Single smart input - route by prefix
+  document.getElementById('scanInput').addEventListener('keydown', e => {
+    if (e.key==='Enter') {
+      const v = e.target.value.trim().toUpperCase();
+      e.target.value = '';
+      if (!v) return;
+      if (/^INV/i.test(v)) {
+        // Invoice barcode
+        smartLoadInvoice(v);
+      } else {
+        // Product barcode
+        processScan(v);
+      }
+    }
+  });
+  // Always focus scan input
+  document.getElementById('scanInput').focus();
+}
+
+init();
+setTimeout(()=>{ if(cfg.mode==='demo') toast('Demo: พิมพ์ INV001605 แล้วกด Enter ลองได้เลย','info','💡'); },800);
+</script>
+</body>
+</html>
