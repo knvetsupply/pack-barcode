@@ -553,7 +553,7 @@ function processScan(barcode) {
   }
 
   scanned[item.sku] = (scanned[item.sku]||0) + 1;
-  resetAutoLogout();
+  _resetTimer();
   const cur = scanned[item.sku], req = item.qty;
 
   if (cur < req) {
@@ -887,83 +887,77 @@ function closeImgLightbox() {
   document.getElementById('imgLightbox').style.display = 'none';
 }
 
-// ── Employee & Pack Log ────────────────────────────────
+// ── Employee & Pack Log (clean rewrite) ──────────────
 var currentEmployee = '';
 var sessionStart = null;
 var sessionErrors = 0;
 var packLog = JSON.parse(localStorage.getItem('packLog') || '[]');
-var autoLogoutTimer = null;
-var AUTO_LOGOUT_MS = 30 * 60 * 1000; // 30 นาที
-if (autoLogoutTimer) clearTimeout(autoLogoutTimer); // clear any stale timer on load
-
-function lockSystem() {
-  currentEmployee = '';
-  document.getElementById('empName').textContent = '—';
-  // ล็อคช่องสแกน
-  if (invoice) reset();
-  document.getElementById('scanInput').disabled = true;
-  showEmployeeModal();
-}
-
-function resetAutoLogout() {
-  if (autoLogoutTimer) clearTimeout(autoLogoutTimer);
-  if (!currentEmployee) return;
-  autoLogoutTimer = setTimeout(function() {
-    toast('ไม่มีการใช้งาน 30 นาที — กรุณาล็อกอินใหม่', 'warn', '⏱');
-    lockSystem();
-  }, AUTO_LOGOUT_MS);
-}
+var _autoTimer = null;
+var AUTO_LOGOUT_MIN = 30;
 
 function initEmployee() {
-  // ไม่โหลดชื่อจาก localStorage — ต้องกรอกใหม่ทุกครั้งที่เปิดหน้า
   document.getElementById('scanInput').disabled = true;
-  showEmployeeModal();
+  _showEmpModal();
 }
 
-function showEmployeeModal() {
+function _showEmpModal() {
   var m = document.getElementById('empModal');
-  m.style.display = 'flex'; m.style.zIndex = '999999';
+  m.style.cssText = 'display:flex !important;visibility:visible;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;';
   document.getElementById('empInput').value = '';
+  document.getElementById('empInput').style.borderColor = '#e2e8f0';
   setTimeout(function(){ document.getElementById('empInput').focus(); }, 100);
 }
 
+function _hideEmpModal() {
+  var m = document.getElementById('empModal');
+  m.style.cssText = 'display:none !important;visibility:hidden;position:fixed;inset:0;z-index:-1;';
+}
+
 function saveEmployee() {
-  var name = document.getElementById('empInput').value.trim();
+  var name = (document.getElementById('empInput').value || '').trim();
   if (!name) {
     document.getElementById('empInput').style.borderColor = '#dc2626';
     return;
   }
   currentEmployee = name;
   document.getElementById('empName').textContent = name;
-  var em = document.getElementById('empModal'); em.style.display = 'none'; em.style.zIndex = '-1';
-  document.getElementById('empInput').value = '';
-  document.getElementById('empInput').style.borderColor = '#e2e8f0';
+  _hideEmpModal();
   document.getElementById('scanInput').disabled = false;
   document.getElementById('scanInput').focus();
-  resetAutoLogout();
+  _resetTimer();
   toast('ยินดีต้อนรับ ' + name, 'ok', '👤');
 }
 
-function changeEmployee() {
-  lockSystem();
+function changeEmployee() { _lockSystem(); }
+function logoutEmployee() { if (confirm('ออกจากระบบ?')) _lockSystem(); }
+
+function _lockSystem() {
+  if (_autoTimer) { clearTimeout(_autoTimer); _autoTimer = null; }
+  currentEmployee = '';
+  document.getElementById('empName').textContent = '—';
+  document.getElementById('scanInput').disabled = true;
+  if (invoice) reset();
+  _showEmpModal();
 }
 
-function logoutEmployee() {
-  if (confirm('ออกจากระบบ?')) lockSystem();
+function _resetTimer() {
+  if (_autoTimer) clearTimeout(_autoTimer);
+  if (!currentEmployee) return;
+  _autoTimer = setTimeout(function() {
+    toast('ไม่มีการใช้งาน ' + AUTO_LOGOUT_MIN + ' นาที — กรุณาล็อกอินใหม่', 'warn', '⏱');
+    _lockSystem();
+  }, AUTO_LOGOUT_MIN * 60 * 1000);
 }
 
-// Start session when invoice loaded
 function startPackSession() {
   sessionStart = new Date();
   sessionErrors = 0;
 }
 
-// End session when order complete
 function endPackSession(status) {
   if (!sessionStart || !invoice) return;
   var end = new Date();
   var dur = Math.round((end - sessionStart) / 1000);
-  var mins = Math.floor(dur/60), secs = dur%60;
   var entry = {
     id: Date.now(),
     emp: currentEmployee || 'ไม่ระบุ',
@@ -972,7 +966,7 @@ function endPackSession(status) {
     date: sessionStart.toLocaleDateString('th-TH'),
     startTime: sessionStart.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit',second:'2-digit'}),
     endTime: end.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit',second:'2-digit'}),
-    duration: mins + ':' + String(secs).padStart(2,'0'),
+    duration: Math.floor(dur/60) + ':' + String(dur%60).padStart(2,'0'),
     status: status,
     errors: sessionErrors,
     items: invoice.items.length
@@ -990,58 +984,37 @@ function showPackLog() {
 }
 
 function renderPackLog() {
-  var q = (document.getElementById('logSearch')?.value||'').toLowerCase();
-  var filtered = packLog.filter(e =>
-    !q || e.customer.toLowerCase().includes(q) ||
-    e.inv.toLowerCase().includes(q) ||
-    e.emp.toLowerCase().includes(q)
-  );
+  var q = ((document.getElementById('logSearch') || {}).value || '').toLowerCase();
+  var filtered = packLog.filter(function(e) {
+    return !q || e.customer.toLowerCase().includes(q) ||
+      e.inv.toLowerCase().includes(q) || e.emp.toLowerCase().includes(q);
+  });
   var list = document.getElementById('packLogList');
   if (!filtered.length) {
     list.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">ไม่พบรายการ</div>';
     return;
   }
-  list.innerHTML = filtered.map(e => {
-    var statusColor = e.status==='✅ ครบ' ? '#16a34a' : '#dc2626';
-    var errBadge = e.errors > 0 ? `<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:20px;font-size:11px;margin-left:6px;">สแกนผิด ${e.errors} ครั้ง</span>` : '';
-    return `<div style="display:grid;grid-template-columns:1fr 1fr 120px 100px 80px;gap:12px;align-items:center;padding:12px 14px;border-radius:8px;border:1px solid #f1f5f9;margin-bottom:6px;background:#fafafa;">
-      <div>
-        <div style="font-weight:600;font-size:14px;color:#1e293b;">${e.inv}</div>
-        <div style="font-size:12px;color:#64748b;margin-top:2px;">${e.customer}</div>
-      </div>
-      <div>
-        <div style="font-size:13px;color:#475569;">👤 ${e.emp}</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:2px;">📅 ${e.date}</div>
-      </div>
-      <div style="font-size:12px;color:#64748b;">
-        <div>🕐 ${e.startTime}</div>
-        <div style="margin-top:2px;">🕑 ${e.endTime}</div>
-        <div style="margin-top:2px;color:#94a3b8;">⏱ ${e.duration} นาที</div>
-      </div>
-      <div>
-        <div style="color:${statusColor};font-weight:600;font-size:13px;">${e.status}</div>
-        ${errBadge}
-      </div>
-      <div style="font-size:12px;color:#94a3b8;text-align:right;">${e.items} รายการ</div>
-    </div>`;
+  list.innerHTML = filtered.map(function(e) {
+    var sc = e.status==='✅ ครบ' ? '#16a34a' : '#dc2626';
+    var eb = e.errors > 0 ? '<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:20px;font-size:11px;margin-left:6px;">สแกนผิด '+e.errors+' ครั้ง</span>' : '';
+    return '<div style="display:grid;grid-template-columns:1fr 1fr 130px 110px 70px;gap:12px;align-items:center;padding:12px 14px;border-radius:8px;border:1px solid #f1f5f9;margin-bottom:6px;background:#fafafa;">'
+      +'<div><div style="font-weight:600;font-size:14px;">'+e.inv+'</div><div style="font-size:12px;color:#64748b;margin-top:2px;">'+e.customer+'</div></div>'
+      +'<div><div style="font-size:13px;">👤 '+e.emp+'</div><div style="font-size:12px;color:#94a3b8;margin-top:2px;">📅 '+e.date+'</div></div>'
+      +'<div style="font-size:12px;color:#64748b;"><div>🕐 '+e.startTime+'</div><div style="margin-top:2px;">🕑 '+e.endTime+'</div></div>'
+      +'<div><div style="color:'+sc+';font-weight:600;font-size:13px;">'+e.status+'</div>'+eb+'</div>'
+      +'<div style="font-size:12px;color:#94a3b8;text-align:right;">'+e.items+' รายการ<br>⏱ '+e.duration+'</div>'
+      +'</div>';
   }).join('');
 }
 
 function exportPackLog() {
-  var q = (document.getElementById('logSearch')?.value||'').toLowerCase();
-  var filtered = packLog.filter(e =>
-    !q || e.customer.toLowerCase().includes(q) ||
-    e.inv.toLowerCase().includes(q) ||
-    e.emp.toLowerCase().includes(q)
-  );
-  var csv = 'พนักงาน,Invoice,ลูกค้า,วันที่,เริ่ม,เสร็จ,เวลา(นาที),สถานะ,สแกนผิด\n';
-  csv += filtered.map(e =>
-    [e.emp, e.inv, e.customer, e.date, e.startTime, e.endTime, e.duration, e.status, e.errors].join(',')
-  ).join('\n');
-  var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  var rows = packLog.map(function(e){
+    return [e.emp,e.inv,e.customer,e.date,e.startTime,e.endTime,e.duration,e.status,e.errors].join(',');
+  });
+  var csv = 'พนักงาน,Invoice,ลูกค้า,วันที่,เริ่ม,เสร็จ,เวลา,สถานะ,สแกนผิด\n' + rows.join('\n');
   var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'pack-log-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download = 'pack-log-'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();
 }
 
@@ -1064,7 +1037,7 @@ function exportPackLog() {
 </div>
 
 <!-- Employee Login Modal -->
-<div id="empModal" style="display:flex;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;">
+<div id="empModal" style="display:none;visibility:hidden;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:16px;padding:32px 36px;max-width:360px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.4);">
     <div style="font-size:36px;margin-bottom:12px;">👤</div>
     <div style="font-size:18px;font-weight:700;color:#1e293b;margin-bottom:6px;">ระบุชื่อพนักงาน</div>
