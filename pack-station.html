@@ -894,6 +894,7 @@ var sessionErrors = 0;
 var packLog = JSON.parse(localStorage.getItem('packLog') || '[]');
 var autoLogoutTimer = null;
 var AUTO_LOGOUT_MS = 30 * 60 * 1000; // 30 นาที
+if (autoLogoutTimer) clearTimeout(autoLogoutTimer); // clear any stale timer on load
 
 function lockSystem() {
   currentEmployee = '';
@@ -921,7 +922,7 @@ function initEmployee() {
 
 function showEmployeeModal() {
   var m = document.getElementById('empModal');
-  m.style.cssText = 'display:flex;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;';
+  m.style.display = 'flex'; m.style.zIndex = '999999';
   document.getElementById('empInput').value = '';
   setTimeout(function(){ document.getElementById('empInput').focus(); }, 100);
 }
@@ -934,7 +935,7 @@ function saveEmployee() {
   }
   currentEmployee = name;
   document.getElementById('empName').textContent = name;
-  document.getElementById('empModal').style.display = 'none';
+  var em = document.getElementById('empModal'); em.style.display = 'none'; em.style.zIndex = '-1';
   document.getElementById('empInput').value = '';
   document.getElementById('empInput').style.borderColor = '#e2e8f0';
   document.getElementById('scanInput').disabled = false;
