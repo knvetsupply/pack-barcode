@@ -613,22 +613,22 @@ function renderAll() {
     const countColor = s > item.qty ? 'color:#dc2626;font-weight:700' : s === item.qty ? 'color:#16a34a;font-weight:700' : 'color:#64748b';
     // Image section - clickable lightbox, no border radius
     const imgUrl = item.img || '';
-    const imgSection = imgUrl
-      ? `<div style="width:120px;flex-shrink:0;align-self:stretch;cursor:zoom-in;overflow:hidden;" onclick="openImgLightbox('${imgUrl}')">
-           <img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentNode.innerHTML='<div style=\'width:100%;height:100%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:44px;\'>📦</div>'">
+    // Clean item card layout
+    const imgBlock = imgUrl
+      ? `<div onclick="openImgLightbox('${imgUrl}')" style="width:110px;min-height:110px;flex-shrink:0;cursor:zoom-in;overflow:hidden;align-self:stretch;">
+           <img src="${imgUrl}" style="width:110px;height:100%;object-fit:cover;display:block;" onerror="this.outerHTML='<div style=\'width:110px;align-self:stretch;background:#eee;display:flex;align-items:center;justify-content:center;font-size:40px;\'>📦</div>'">
          </div>`
-      : `<div style="width:120px;flex-shrink:0;align-self:stretch;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:44px;">📦</div>`;
+      : `<div style="width:110px;flex-shrink:0;background:#eee;display:flex;align-items:center;justify-content:center;font-size:40px;align-self:stretch;">📦</div>`;
 
-    row.style.position = 'relative';
     row.innerHTML = `
-      <div class="i-check">${icon}</div>
-      ${imgSection}
-      <div style="flex:1;min-width:0;padding:12px 14px;">
-        <div class="i-name" style="font-size:16px;font-weight:600;line-height:1.4;">${item.name}</div>
-        <div class="i-sku" style="font-size:13px;margin-top:6px;">${item.sku}</div>
+      <div class="i-check" style="flex-shrink:0;">${icon}</div>
+      ${imgBlock}
+      <div style="flex:1;min-width:0;padding:14px 16px;display:flex;flex-direction:column;justify-content:center;">
+        <div style="font-size:16px;font-weight:600;line-height:1.4;color:var(--text1);">${item.name}</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text3);margin-top:5px;">${item.sku}</div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-end;padding:10px 14px;gap:6px;">
-        <div class="i-count" style="${countColor};font-size:20px;font-weight:800;">${s}/${item.qty}</div>
+      <div style="flex-shrink:0;padding:14px 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:70px;">
+        <div style="${countColor};font-size:22px;font-weight:800;font-family:var(--mono);line-height:1;">${s}/${item.qty}</div>
         ${minusBtn || ''}
       </div>`;
     list.appendChild(row);
