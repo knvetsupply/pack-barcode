@@ -846,7 +846,7 @@ function showWrongScanModal(barcode) {
   var wm = document.getElementById('wrongModal');
   if (!wm) return;
   document.getElementById('wrongScanCode').textContent = barcode;
-  wm.style.cssText = 'display:flex;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;';
+  wm.style.cssText = 'display:flex;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;';
   document.getElementById('scanInput').disabled = true;
 }
 function confirmWrongRemoved() {
@@ -859,11 +859,11 @@ function confirmWrongRemoved() {
 </script>
 
 <!-- Wrong Scan Modal -->
-<div id="wrongModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;">
-  <div style="background:var(--surface-1);border-radius:16px;padding:28px 32px;max-width:320px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+<div id="wrongModal" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:28px 32px;max-width:320px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.5);position:relative;z-index:1000000;">
     <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
-    <div style="font-size:16px;font-weight:600;color:#dc2626;margin-bottom:8px;">สินค้าไม่อยู่ใน Invoice!</div>
-    <div id="wrongScanCode" style="font-family:var(--mono);font-size:13px;color:var(--text2);margin-bottom:20px;padding:8px;background:var(--surface-2);border-radius:8px;"></div>
+    <div style="font-size:16px;font-weight:700;color:#dc2626;margin-bottom:8px;">สินค้าไม่อยู่ใน Invoice!</div>
+    <div id="wrongScanCode" style="font-family:monospace;font-size:13px;color:#555;margin-bottom:20px;padding:8px;background:#f5f5f5;border-radius:8px;"></div>
     <button onclick="confirmWrongRemoved()" style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;">เอาสินค้าที่ผิดออกแล้ว !</button>
   </div>
 </div>
