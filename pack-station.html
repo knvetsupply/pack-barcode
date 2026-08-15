@@ -530,6 +530,7 @@ async function loadInvoice(overrideSerial) {
   document.getElementById('hdOrder').textContent = data.contactName + ' · ' + data.serial;
   toast('โหลด '+data.serial+' แล้ว · '+data.items.length+' รายการ','ok','📋');
   addLog('info', data.serial, 'โหลดใบกำกับจาก FlowAccount · '+data.items.length+' รายการ');
+  startPackSession();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -961,11 +962,13 @@ function _resetTimer() {
 }
 
 function startPackSession() {
+  console.log('[PackLog] startPackSession called');
   sessionStart = new Date();
   sessionErrors = 0;
 }
 
 function endPackSession(status) {
+  console.log('[PackLog] endPackSession called:', status, 'sessionStart:', sessionStart, 'invoice:', invoice ? invoice.serial : null);
   if (!sessionStart || !invoice) return;
   var end = new Date();
   var dur = Math.round((end - sessionStart) / 1000);
