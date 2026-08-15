@@ -243,6 +243,7 @@ header{
   <div class="hd-right">
     <button class="btn-hd" onclick="showPackLog()" style="margin-right:6px;">📋 Pack Log</button>
     <div id="empTag" onclick="changeEmployee()" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;margin-right:8px;" title="คลิกเพื่อเปลี่ยนพนักงาน">👤 <span id="empName">—</span></div>
+    <button class="btn-hd" onclick="logoutEmployee()" style="margin-right:8px;background:rgba(220,38,38,0.3);border-color:rgba(220,38,38,0.5);" title="ออกจากระบบ">🔒 ออก</button>
     <button class="btn-hd" onclick="document.getElementById('settingsModal').classList.add('show')">⚙ ตั้งค่า API</button>
     <div class="status-pill">
       <div class="sdot" id="sdot"></div>
@@ -552,6 +553,7 @@ function processScan(barcode) {
   }
 
   scanned[item.sku] = (scanned[item.sku]||0) + 1;
+  resetAutoLogout();
   const cur = scanned[item.sku], req = item.qty;
 
   if (cur < req) {
@@ -885,38 +887,67 @@ function closeImgLightbox() {
 }
 
 // ── Employee & Pack Log ────────────────────────────────
-var currentEmployee = localStorage.getItem('packEmployee') || '';
+var currentEmployee = '';
 var sessionStart = null;
 var sessionErrors = 0;
 var packLog = JSON.parse(localStorage.getItem('packLog') || '[]');
+var autoLogoutTimer = null;
+var AUTO_LOGOUT_MS = 30 * 60 * 1000; // 30 นาที
+
+function lockSystem() {
+  currentEmployee = '';
+  document.getElementById('empName').textContent = '—';
+  // ล็อคช่องสแกน
+  if (invoice) reset();
+  document.getElementById('scanInput').disabled = true;
+  showEmployeeModal();
+}
+
+function resetAutoLogout() {
+  if (autoLogoutTimer) clearTimeout(autoLogoutTimer);
+  if (!currentEmployee) return;
+  autoLogoutTimer = setTimeout(function() {
+    toast('ไม่มีการใช้งาน 30 นาที — กรุณาล็อกอินใหม่', 'warn', '⏱');
+    lockSystem();
+  }, AUTO_LOGOUT_MS);
+}
 
 function initEmployee() {
-  if (!currentEmployee) {
-    showEmployeeModal();
-  } else {
-    document.getElementById('empName').textContent = currentEmployee;
-  }
+  // ไม่โหลดชื่อจาก localStorage — ต้องกรอกใหม่ทุกครั้งที่เปิดหน้า
+  document.getElementById('scanInput').disabled = true;
+  showEmployeeModal();
 }
 
 function showEmployeeModal() {
   var m = document.getElementById('empModal');
-  m.style.cssText = 'display:flex;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;';
+  m.style.cssText = 'display:flex;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;';
+  document.getElementById('empInput').value = '';
   setTimeout(function(){ document.getElementById('empInput').focus(); }, 100);
 }
 
 function saveEmployee() {
   var name = document.getElementById('empInput').value.trim();
-  if (!name) return;
+  if (!name) {
+    document.getElementById('empInput').style.borderColor = '#dc2626';
+    return;
+  }
   currentEmployee = name;
-  localStorage.setItem('packEmployee', name);
   document.getElementById('empName').textContent = name;
   document.getElementById('empModal').style.display = 'none';
   document.getElementById('empInput').value = '';
+  document.getElementById('empInput').style.borderColor = '#e2e8f0';
+  document.getElementById('scanInput').disabled = false;
+  document.getElementById('scanInput').focus();
+  resetAutoLogout();
+  toast('ยินดีต้อนรับ ' + name, 'ok', '👤');
 }
 
 function changeEmployee() {
-  document.getElementById('empInput').value = currentEmployee;
-  showEmployeeModal();
+  lockSystem();
+}
+
+function logoutEmployee() {
+  if (confirm('ออกจากระบบ?')) lockSystem();
 }
 
 // Start session when invoice loaded
@@ -1039,7 +1070,7 @@ function exportPackLog() {
     <input id="empInput" type="text" placeholder="ชื่อ-นามสกุล หรือชื่อเล่น"
       style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;font-family:inherit;box-sizing:border-box;outline:none;margin-bottom:14px;"
       onkeydown="if(event.key==='Enter')saveEmployee()">
-    <button onclick="saveEmployee()" style="width:100%;padding:13px;background:#1e293b;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;">เริ่มงาน →</button>
+    <button onclick="saveEmployee()" style="width:100%;padding:13px;background:#1e293b;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;">✅ เข้าสู่ระบบ</button>
   </div>
 </div>
 
