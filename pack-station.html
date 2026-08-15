@@ -1022,13 +1022,59 @@ function renderPackLog() {
 }
 
 function exportPackLog() {
-  var rows = packLog.map(function(e){
-    return [e.emp,e.inv,e.customer,e.date,e.startTime,e.endTime,e.duration,e.status,e.errors].join(',');
+  var q = ((document.getElementById('logSearch') || {}).value || '').toLowerCase();
+  var filtered = packLog.filter(function(e) {
+    return !q || e.customer.toLowerCase().includes(q) ||
+      e.inv.toLowerCase().includes(q) || e.emp.toLowerCase().includes(q);
   });
-  var csv = 'พนักงาน,Invoice,ลูกค้า,วันที่,เริ่ม,เสร็จ,เวลา,สถานะ,สแกนผิด\n' + rows.join('\n');
+  var rows = filtered.map(function(e, i) {
+    var isOk = e.errors === 0;
+    var rowBg = isOk ? '#e8f5e9' : '#fff8e1';
+    var rowColor = isOk ? '#1b5e20' : '#e65100';
+    var borderColor = isOk ? '#c8e6c9' : '#ffecb3';
+    var errCell = e.errors > 0
+      ? '<td style="padding:7px 8px;text-align:center;border:0.5px solid '+borderColor+';"><span style="background:#ffcdd2;color:#c62828;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;">'+e.errors+'</span></td>'
+      : '<td style="padding:7px 8px;text-align:center;border:0.5px solid '+borderColor+';color:'+rowColor+';">0</td>';
+    var td = 'padding:7px 8px;border:0.5px solid '+borderColor+';color:'+rowColor+';';
+    return '<tr style="background:'+rowBg+';">'
+      +'<td style="'+td+'text-align:center;">'+(i+1)+'</td>'
+      +'<td style="'+td+'font-weight:500;">'+e.emp+'</td>'
+      +'<td style="'+td+'font-family:monospace;">'+e.inv+'</td>'
+      +'<td style="'+td+'">'+e.customer+'</td>'
+      +'<td style="'+td+'">'+e.date+'</td>'
+      +'<td style="'+td+'text-align:center;">'+e.startTime+'</td>'
+      +'<td style="'+td+'text-align:center;">'+e.endTime+'</td>'
+      +'<td style="'+td+'text-align:center;">'+e.duration+'</td>'
+      +'<td style="'+td+'text-align:center;"><span style="background:'+(isOk?'#c8e6c9':'#ffe0b2')+';color:'+rowColor+';padding:2px 8px;border-radius:4px;font-size:11px;">'+e.status+'</span></td>'
+      +errCell
+      +'<td style="'+td+'text-align:center;">'+e.items+'</td>'
+      +'</tr>';
+  }).join('');
+
+  var thStyle = 'padding:8px;background:#217346;color:#fff;border:0.5px solid #1a5c39;';
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">'
+    +'<head><meta charset="UTF-8"><style>body{font-family:Tahoma,sans-serif;font-size:12px;}</style></head>'
+    +'<body><table border="1" cellpadding="0" cellspacing="0">'
+    +'<thead><tr>'
+    +'<th style="'+thStyle+'">ลำดับ</th>'
+    +'<th style="'+thStyle+'">พนักงาน</th>'
+    +'<th style="'+thStyle+'">เลขที่ Invoice</th>'
+    +'<th style="'+thStyle+'">ชื่อลูกค้า</th>'
+    +'<th style="'+thStyle+'">วันที่</th>'
+    +'<th style="'+thStyle+'">เวลาเริ่ม</th>'
+    +'<th style="'+thStyle+'">เวลาเสร็จ</th>'
+    +'<th style="'+thStyle+'">ระยะเวลา</th>'
+    +'<th style="'+thStyle+'">สถานะ</th>'
+    +'<th style="'+thStyle+'">สแกนผิด (ครั้ง)</th>'
+    +'<th style="'+thStyle+'">จำนวนรายการสินค้า</th>'
+    +'</tr></thead>'
+    +'<tbody>'+rows+'</tbody>'
+    +'</table></body></html>';
+
+  var BOM = '\uFEFF';
   var a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
-  a.download = 'pack-log-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.href = URL.createObjectURL(new Blob([BOM+html],{type:'application/vnd.ms-excel;charset=utf-8;'}));
+  a.download = 'pack-log-'+new Date().toISOString().slice(0,10)+'.xls';
   a.click();
 }
 
