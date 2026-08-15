@@ -576,12 +576,22 @@ function processScan(barcode) {
 
 function checkDone() {
   if (!invoice) return;
-  if (invoice.items.every(it => (scanned[it.sku]||0) === it.qty)) {
+  const hasOver  = invoice.items.some(it => (scanned[it.sku]||0) > it.qty);
+  const hasShort = invoice.items.some(it => (scanned[it.sku]||0) < it.qty);
+  if (hasOver) {
+    beep('over');
+    startErrorFlash();
+  } else if (!hasShort) {
+    stopErrorFlash();
+    endPackSession('✅ ครบ');
     setTimeout(() => {
       document.getElementById('ccSub').textContent = invoice.serial+' · '+invoice.items.length+' รายการ ครบถ้วนทั้งหมด';
       document.getElementById('completeOverlay').classList.add('show');
       beep('done');
     }, 400);
+  } else {
+    stopErrorFlash();
+    beep('ok');
   }
 }
 
