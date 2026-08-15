@@ -309,7 +309,7 @@ header{
     <div class="cc-icon">✅</div>
     <div class="cc-title">แพ็คครบแล้ว!</div>
     <div class="cc-sub" id="ccSub">ทุกรายการถูกต้อง พร้อมปิดกล่องได้เลย</div>
-    <button class="btn-next" onclick="reset()">ออเดอร์ถัดไป →</button>
+    <button class="btn-next" onclick="stopGreenFlash(); stopErrorFlash(); reset();">ออเดอร์ถัดไป →</button>
   </div>
 </div>
 
@@ -539,9 +539,10 @@ function processScan(barcode) {
   );
 
   if (!item) {
-    toast('ไม่พบสินค้าในใบกำกับ: '+barcode,'bad','✗');
-    addLog('bad', barcode, 'ไม่พบใน Invoice');
-    flashRing('bad'); beep('error');
+    addLog('bad', barcode, 'ไม่พบใน Invoice: '+barcode);
+    beep('over');
+    startErrorFlash();
+    showWrongScanModal(barcode);
     return;
   }
 
@@ -551,11 +552,11 @@ function processScan(barcode) {
   if (cur < req) {
     toast(item.name+' · '+cur+'/'+req,'ok','✓');
     addLog('ok', item.sku, item.name+' — สแกนแล้ว '+cur+'/'+req);
-    flashRing('ok'); beep('ok');
+    stopErrorFlash(); flashRing('ok'); beep('ok');
   } else if (cur === req) {
     toast('✓ ครบ! '+item.name,'ok','✅');
     addLog('ok', item.sku, item.name+' — ✓ ครบ '+req+'/'+req);
-    flashRing('ok'); beep('complete');
+    flashRing('ok');
   } else {
     toast('⚠ เกิน! '+item.name+' ('+cur+'/'+req+')','warn','⚠');
     addLog('warn', item.sku, item.name+' — ⚠ เกิน '+cur+'/'+req);
@@ -622,6 +623,8 @@ function renderAll() {
 // RESET
 // ══════════════════════════════════════════════════════════════
 function reset() {
+  stopErrorFlash();
+  stopGreenFlash();
   invoice = null; scanned = {};
   document.getElementById('completeOverlay').classList.remove('show');
   document.getElementById('invSerial').textContent = '—';
@@ -745,6 +748,11 @@ function startErrorFlash() {
     el.style.opacity = on ? '0.45' : '0.1';
   }, 250);
 }
+
+function stopGreenFlash() {
+  var el = getFlashEl();
+  if (el) { el.style.transition = 'none'; el.style.opacity = '0'; }
+}
 function stopErrorFlash() {
   if (_flashInt) { clearInterval(_flashInt); _flashInt = null; }
   var el = getFlashEl();
@@ -834,5 +842,15 @@ function init() {
 init();
 setTimeout(()=>{ if(cfg.mode==='demo') toast('Demo: พิมพ์ INV001605 แล้วกด Enter ลองได้เลย','info','💡'); },800);
 </script>
+
+<!-- Wrong Scan Modal -->
+<div id="wrongModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;">
+  <div style="background:var(--surface-1);border-radius:16px;padding:28px 32px;max-width:320px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+    <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
+    <div style="font-size:16px;font-weight:600;color:#dc2626;margin-bottom:8px;">สินค้าไม่อยู่ใน Invoice!</div>
+    <div id="wrongScanCode" style="font-family:var(--mono);font-size:13px;color:var(--text2);margin-bottom:20px;padding:8px;background:var(--surface-2);border-radius:8px;"></div>
+    <button onclick="confirmWrongRemoved()" style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;">เอาสินค้าที่ผิดออกแล้ว !</button>
+  </div>
+</div>
 </body>
 </html>
