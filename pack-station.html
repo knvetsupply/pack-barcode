@@ -614,13 +614,13 @@ function renderAll() {
     const imgUrl = item.img || '';
     // Clean item card - image fills full height, count on far right
     const imgBlock = imgUrl
-      ? `<div onclick="openImgLightbox('${imgUrl}')" style="width:120px;flex-shrink:0;cursor:zoom-in;overflow:hidden;align-self:stretch;">
-           <img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.outerHTML='<div style=\'width:120px;background:#eee;display:flex;align-items:center;justify-content:center;font-size:40px;\'>📦</div>'">
+      ? `<div onclick="openImgLightbox('${imgUrl}')" style="width:120px;flex-shrink:0;cursor:zoom-in;padding:8px 0 8px 0;align-self:stretch;display:flex;align-items:center;">
+           <img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:6px;" onerror="this.outerHTML='<div style=\'width:120px;background:#eee;display:flex;align-items:center;justify-content:center;font-size:40px;\'>📦</div>'">
          </div>`
-      : `<div style="width:120px;flex-shrink:0;background:#eee;display:flex;align-items:center;justify-content:center;font-size:40px;">📦</div>`;
+      : `<div style="width:120px;flex-shrink:0;background:#eee;display:flex;align-items:center;justify-content:center;font-size:40px;padding:8px;border-radius:6px;margin:8px 0;">📦</div>`;
 
     row.innerHTML = `
-      <div class="i-check" style="flex-shrink:0;margin:0 4px 0 10px;">${icon}</div>
+      <div class="i-check" style="flex-shrink:0;margin:0 4px 0 10px;align-self:center;">${icon}</div>
       ${imgBlock}
       <div style="flex:1;min-width:0;padding:16px 18px;display:flex;flex-direction:column;justify-content:center;">
         <div style="font-size:16px;font-weight:600;line-height:1.4;color:var(--text1);">${item.name}</div>
