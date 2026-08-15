@@ -841,10 +841,25 @@ function init() {
 
 init();
 setTimeout(()=>{ if(cfg.mode==='demo') toast('Demo: พิมพ์ INV001605 แล้วกด Enter ลองได้เลย','info','💡'); },800);
+
+function showWrongScanModal(barcode) {
+  var wm = document.getElementById('wrongModal');
+  if (!wm) return;
+  document.getElementById('wrongScanCode').textContent = barcode;
+  wm.style.cssText = 'display:flex;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;';
+  document.getElementById('scanInput').disabled = true;
+}
+function confirmWrongRemoved() {
+  var wm = document.getElementById('wrongModal');
+  if (wm) wm.style.display = 'none';
+  document.getElementById('scanInput').disabled = false;
+  stopErrorFlash();
+  setTimeout(function(){ document.getElementById('scanInput').focus(); }, 50);
+}
 </script>
 
 <!-- Wrong Scan Modal -->
-<div id="wrongModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;">
+<div id="wrongModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;">
   <div style="background:var(--surface-1);border-radius:16px;padding:28px 32px;max-width:320px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
     <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
     <div style="font-size:16px;font-weight:600;color:#dc2626;margin-bottom:8px;">สินค้าไม่อยู่ใน Invoice!</div>
