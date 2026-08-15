@@ -282,7 +282,7 @@ header{
       </div>
       <input type="text" id="scanInput"
         placeholder="สแกน barcode ใบกำกับ หรือ สินค้า..."
-        autocomplete="off" />
+        autocomplete="off" disabled />
     </div>
   </div>
 
@@ -860,6 +860,7 @@ function init() {
 }
 
 init();
+initEmployee();
 setTimeout(()=>{ if(cfg.mode==='demo') toast('Demo: พิมพ์ INV001605 แล้วกด Enter ลองได้เลย','info','💡'); },800);
 
 function showWrongScanModal(barcode) {
@@ -1062,7 +1063,7 @@ function exportPackLog() {
 </div>
 
 <!-- Employee Login Modal -->
-<div id="empModal" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+<div id="empModal" style="display:flex;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:16px;padding:32px 36px;max-width:360px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.4);">
     <div style="font-size:36px;margin-bottom:12px;">👤</div>
     <div style="font-size:18px;font-weight:700;color:#1e293b;margin-bottom:6px;">ระบุชื่อพนักงาน</div>
