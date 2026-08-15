@@ -614,7 +614,7 @@ function renderAll() {
     const imgUrl = item.img || '';
     // Clean item card - image fills full height, count on far right
     const imgBlock = imgUrl
-      ? `<div onclick="openImgLightbox('${imgUrl}')" style="width:120px;flex-shrink:0;cursor:zoom-in;padding:8px 0 8px 0;align-self:stretch;display:flex;align-items:center;">
+      ? `<div onclick="openImgLightbox('${imgUrl}')" style="width:120px;flex-shrink:0;cursor:zoom-in;padding:10px 8px;align-self:stretch;display:flex;align-items:center;justify-content:center;">
            <img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:6px;" onerror="this.outerHTML='<div style=\'width:120px;background:#eee;display:flex;align-items:center;justify-content:center;font-size:40px;\'>📦</div>'">
          </div>`
       : `<div style="width:120px;flex-shrink:0;background:#eee;display:flex;align-items:center;justify-content:center;font-size:40px;padding:8px;border-radius:6px;margin:8px 0;">📦</div>`;
