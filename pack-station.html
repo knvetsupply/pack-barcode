@@ -897,20 +897,21 @@ var AUTO_LOGOUT_MIN = 30;
 
 function initEmployee() {
   document.getElementById('scanInput').disabled = true;
-  _showEmpModal();
+  // Delay to ensure page is fully ready
+  setTimeout(function() { _showEmpModal(); }, 300);
 }
 
 function _showEmpModal() {
   var m = document.getElementById('empModal');
-  m.style.cssText = 'display:flex !important;visibility:visible;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;';
+  m.style.display = 'flex';
+  m.style.zIndex = '999999';
   document.getElementById('empInput').value = '';
   document.getElementById('empInput').style.borderColor = '#e2e8f0';
   setTimeout(function(){ document.getElementById('empInput').focus(); }, 100);
 }
 
 function _hideEmpModal() {
-  var m = document.getElementById('empModal');
-  m.style.cssText = 'display:none !important;visibility:hidden;position:fixed;inset:0;z-index:-1;';
+  document.getElementById('empModal').style.display = 'none';
 }
 
 function saveEmployee() {
@@ -944,9 +945,9 @@ function _resetTimer() {
   if (_autoTimer) clearTimeout(_autoTimer);
   if (!currentEmployee) return;
   _autoTimer = setTimeout(function() {
-    toast('ไม่มีการใช้งาน ' + AUTO_LOGOUT_MIN + ' นาที — กรุณาล็อกอินใหม่', 'warn', '⏱');
+    toast('ไม่มีการใช้งาน 30 นาที — กรุณาล็อกอินใหม่', 'warn', '⏱');
     _lockSystem();
-  }, AUTO_LOGOUT_MIN * 60 * 1000);
+  }, 1800000); // 30 minutes hardcoded
 }
 
 function startPackSession() {
@@ -1037,7 +1038,7 @@ function exportPackLog() {
 </div>
 
 <!-- Employee Login Modal -->
-<div id="empModal" style="display:none;visibility:hidden;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;">
+<div id="empModal" style="display:flex;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:16px;padding:32px 36px;max-width:360px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.4);">
     <div style="font-size:36px;margin-bottom:12px;">👤</div>
     <div style="font-size:18px;font-weight:700;color:#1e293b;margin-bottom:6px;">ระบุชื่อพนักงาน</div>
