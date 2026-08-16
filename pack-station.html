@@ -536,7 +536,24 @@ async function loadInvoice(overrideSerial) {
 // ══════════════════════════════════════════════════════════════
 // SCAN PRODUCT
 // ══════════════════════════════════════════════════════════════
-function processScan(barcode) {
+
+// ── GS1-128 Parser ────────────────────────────────────
+// ตัด Application Identifier (AI) และ Lot/Date ออก เหลือแค่ GTIN
+function normalizeBarcode(raw) {
+  var s = raw.trim();
+  // GS1-128: ขึ้นต้นด้วย AI "01" + 14 หลัก รวมอย่างน้อย 16 ตัว
+  if (/^01\d{14}/.test(s) && s.length > 16) {
+    return s.substring(2, 16); // ตัด "01" + เอา 14 หลัก GTIN
+  }
+  // GS1-128: ขึ้นต้น "01" + 14 หลักพอดี
+  if (/^01\d{14}$/.test(s)) {
+    return s.substring(2, 16);
+  }
+  return s; // barcode ปกติ ส่งคืนตามเดิม
+}
+
+function processScan(rawBarcode) {
+  var barcode = normalizeBarcode(rawBarcode);
   if (!invoice) return;
 
   const item = invoice.items.find(it =>
