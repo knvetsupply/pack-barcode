@@ -538,28 +538,35 @@ async function loadInvoice(overrideSerial) {
 // ══════════════════════════════════════════════════════════════
 
 // ── GS1-128 Parser ────────────────────────────────────
-// ตัด Application Identifier (AI) และ Lot/Date ออก เหลือแค่ GTIN
-function normalizeBarcode(raw) {
+// คืน list ของ barcode variants ที่เป็นไปได้ทั้งหมด
+function barcodeVariants(raw) {
   var s = raw.trim();
-  // GS1-128: ขึ้นต้นด้วย AI "01" + 14 หลัก รวมอย่างน้อย 16 ตัว
-  if (/^01\d{14}/.test(s) && s.length > 16) {
-    return s.substring(2, 16); // ตัด "01" + เอา 14 หลัก GTIN
+  var variants = [s]; // ใส่ค่าตั้งต้นไว้ก่อน
+  // GS1-128: ขึ้นต้น "01" + ยาวกว่า 15 ตัว
+  if (/^01\d/.test(s) && s.length > 15) {
+    variants.push(s.substring(0, 15));  // "01" + 13 หลัก (แบบที่ FlowAccount truncate)
+    variants.push(s.substring(2, 16));  // GTIN 14 หลัก (ไม่มี "01")
+    variants.push(s.substring(2, 15));  // GTIN 13 หลัก
+    variants.push(s.substring(0, 16));  // "01" + 14 หลัก
   }
-  // GS1-128: ขึ้นต้น "01" + 14 หลักพอดี
-  if (/^01\d{14}$/.test(s)) {
-    return s.substring(2, 16);
-  }
-  return s; // barcode ปกติ ส่งคืนตามเดิม
+  return variants;
 }
+function normalizeBarcode(raw) { return raw.trim(); }
 
 function processScan(rawBarcode) {
   var barcode = normalizeBarcode(rawBarcode);
   if (!invoice) return;
 
-  const item = invoice.items.find(it =>
-    it.sku === barcode ||
-    it.sku.toLowerCase() === barcode.toLowerCase()
-  );
+  // ลอง match ทุก variant ของ barcode (รองรับ GS1-128)
+  var variants = barcodeVariants(rawBarcode);
+  var item = null;
+  for (var vi = 0; vi < variants.length; vi++) {
+    var v = variants[vi];
+    item = invoice.items.find(function(it) {
+      return it.sku === v || it.sku.toLowerCase() === v.toLowerCase();
+    });
+    if (item) { barcode = v; break; }
+  }
 
   if (!item) {
     addLog('bad', barcode, 'ไม่พบใน Invoice: '+barcode);
