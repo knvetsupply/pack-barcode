@@ -991,6 +991,43 @@ function startPackSession() {
   sessionErrors = 0;
 }
 
+
+// ── Auto Stock Deduction ──────────────────────────────
+async function deductStock(inv) {
+  var workerUrl = cfg.workerUrl;
+  if (!workerUrl || !inv || !inv.items) return;
+
+  var errors = 0;
+  for (var i = 0; i < inv.items.length; i++) {
+    var it = inv.items[i];
+    try {
+      var r = await fetch(workerUrl + '/api/stock/transaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'out',
+          name: it.name,
+          barcode: it.sku,
+          qty: it.qty,
+          piecesPerUnit: 1,
+          channel: 'FlowAccount',
+          ref: inv.serial,
+          employee: currentEmployee || 'Pack Station'
+        })
+      });
+      if (!r.ok) errors++;
+    } catch(e) { errors++; }
+  }
+
+  if (errors === 0) {
+    addLog('ok', 'ตัดสต็อกแล้ว', inv.serial + ' · ' + inv.items.length + ' รายการ');
+    toast('📦 ตัดสต็อกอัตโนมัติแล้ว');
+  } else {
+    addLog('bad', 'ตัดสต็อกไม่สำเร็จ', errors + ' รายการ — ตรวจสอบ Worker');
+    toast('⚠️ ตัดสต็อกบางรายการไม่สำเร็จ');
+  }
+}
+
 function endPackSession(status) {
   console.log('[PackLog] endPackSession called:', status, 'sessionStart:', sessionStart, 'invoice:', invoice ? invoice.serial : null);
   if (!sessionStart || !invoice) return;
