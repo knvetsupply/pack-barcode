@@ -541,17 +541,16 @@ async function loadInvoice(overrideSerial) {
 // คืน list ของ barcode variants ที่เป็นไปได้ทั้งหมด
 function barcodeVariants(raw) {
   var s = raw.trim();
-  var variants = [s]; // ใส่ค่าตั้งต้นไว้ก่อน
-  // GS1-128: ขึ้นต้น "01" + ยาวกว่า 15 ตัว
-  if (/^01\d/.test(s) && s.length > 15) {
-    variants.push(s.substring(0, 15));  // "01" + 13 หลัก (แบบที่ FlowAccount truncate)
-    variants.push(s.substring(2, 16));  // GTIN 14 หลัก (ไม่มี "01")
-    variants.push(s.substring(2, 15));  // GTIN 13 หลัก
-    variants.push(s.substring(0, 16));  // "01" + 14 หลัก
-  }
+  // ตัดเหลือ 15 ตัวแรกเสมอ (มาตรฐานเดียวกับ FlowAccount และ Google Sheet)
+  var s15 = s.length > 15 ? s.substring(0, 15) : s;
+  var variants = [s15];
+  if (s15 !== s) variants.push(s); // ใส่ค่าเต็มไว้ด้วยเผื่อ
   return variants;
 }
-function normalizeBarcode(raw) { return raw.trim(); }
+function normalizeBarcode(raw) {
+  var s = raw.trim();
+  return s.length > 15 ? s.substring(0, 15) : s;
+}
 
 function processScan(rawBarcode) {
   var barcode = normalizeBarcode(rawBarcode);
