@@ -519,12 +519,10 @@ function setMode(m) {
 // ── Scan ──────────────────────────────────────────────
 function barcodeVariants(raw) {
   var s = raw.trim();
-  var v = [s];
-  if (/^01\d/.test(s) && s.length > 15) {
-    v.push(s.substring(0, 15));
-    v.push(s.substring(2, 16));
-    v.push(s.substring(2, 15));
-  }
+  // ตัดเหลือ 15 ตัวแรกเสมอ (มาตรฐานเดียวกับ FlowAccount และ Google Sheet)
+  var s15 = s.length > 15 ? s.substring(0, 15) : s;
+  var v = [s15];
+  if (s15 !== s) v.push(s);
   return v;
 }
 
