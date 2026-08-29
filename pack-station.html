@@ -505,6 +505,17 @@ async function loadInvoice(overrideSerial) {
               // ดึงรูปสินค้า
               const img = pd.image?.thumbURL || pd.image?.url || pd.image?.previewURL || '';
               if (img) item.img = img;
+              // ดึง piecesPerUnit จาก Google Sheet
+              if (bc && cfg.workerUrl) {
+                try {
+                  var bc15 = bc.length > 15 ? bc.substring(0,15) : bc;
+                  const sr = await fetch(cfg.workerUrl + '/api/stock/lookup?barcode=' + encodeURIComponent(bc15));
+                  if (sr.ok) {
+                    const sj = await sr.json();
+                    if (sj.piecesPerUnit) item.piecesPerUnit = sj.piecesPerUnit;
+                  }
+                } catch(se) {}
+              }
             }
           } catch(e) {}
         }));
