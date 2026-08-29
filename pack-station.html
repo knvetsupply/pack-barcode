@@ -509,12 +509,12 @@ async function loadInvoice(overrideSerial) {
               if (bc && cfg.workerUrl) {
                 try {
                   var bc15 = bc.length > 15 ? bc.substring(0,15) : bc;
+                  console.log('[Stock] looking up piecesPerUnit for:', bc15);
                   const sr = await fetch(cfg.workerUrl + '/api/stock/lookup?barcode=' + encodeURIComponent(bc15));
-                  if (sr.ok) {
-                    const sj = await sr.json();
-                    if (sj.piecesPerUnit) item.piecesPerUnit = sj.piecesPerUnit;
-                  }
-                } catch(se) {}
+                  const sj = await sr.json();
+                  console.log('[Stock] lookup result:', sj);
+                  if (sj.piecesPerUnit) item.piecesPerUnit = sj.piecesPerUnit;
+                } catch(se) { console.log('[Stock] lookup error:', se.message); }
               }
             }
           } catch(e) {}
