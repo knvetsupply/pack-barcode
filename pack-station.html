@@ -605,6 +605,8 @@ function checkDone() {
   if (hasOver) {
     beep('over');
     startErrorFlash();
+    var overItems = invoice.items.filter(function(it) { return (scanned[it.sku]||0) > it.qty; });
+    showOverModal(overItems);
   } else if (!hasShort) {
     stopErrorFlash();
     endPackSession('✅ ครบ');
@@ -994,7 +996,11 @@ function startPackSession() {
 // ── Auto Stock Deduction ──────────────────────────────
 async function deductStock(inv) {
   var workerUrl = cfg.workerUrl;
-  if (!workerUrl || !inv || !inv.items) return;
+  console.log('[Stock] deductStock called, workerUrl:', workerUrl, 'items:', inv ? inv.items.length : 0);
+  if (!workerUrl || !inv || !inv.items) {
+    console.log('[Stock] skipped - missing workerUrl or inv');
+    return;
+  }
 
   var errors = 0;
   for (var i = 0; i < inv.items.length; i++) {
@@ -1138,6 +1144,22 @@ function exportPackLog() {
   a.click();
 }
 
+
+function showOverModal(overItems) {
+  var msg = overItems.map(function(it) {
+    return it.name + '<br><strong>สแกน ' + (scanned[it.sku]||0) + ' / ต้องการ ' + it.qty + '</strong> (เกิน ' + ((scanned[it.sku]||0) - it.qty) + ' ชิ้น)';
+  }).join('<br><br>');
+  document.getElementById('overModalMsg').innerHTML = msg;
+  var m = document.getElementById('overModal');
+  m.style.display = 'flex';
+  m.style.alignItems = 'center';
+  m.style.justifyContent = 'center';
+}
+function closeOverModal() {
+  document.getElementById('overModal').style.display = 'none';
+  document.getElementById('scanInput').focus();
+}
+
 </script>
 
 <!-- Wrong Scan Modal -->
@@ -1186,6 +1208,28 @@ function exportPackLog() {
       </div>
     </div>
     <div id="packLogList" style="flex:1;overflow-y:auto;padding:12px 16px;"></div>
+  </div>
+</div>
+
+<!-- Over Scan Modal -->
+<div id="overModal" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:28px 32px;max-width:360px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.4);">
+    <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
+    <div style="font-size:16px;font-weight:700;color:#dc2626;margin-bottom:8px;">สินค้าเกินจำนวน!</div>
+    <div id="overModalMsg" style="font-size:13px;color:#64748b;margin-bottom:20px;line-height:1.6;padding:10px;background:#fef2f2;border-radius:8px;"></div>
+    <div style="font-size:13px;color:#475569;margin-bottom:16px;">กดปุ่ม <strong style="color:#dc2626;">−</strong> ข้างรายการสินค้า เพื่อลดจำนวนออกครับ</div>
+    <button onclick="closeOverModal()" style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">รับทราบ — นำสินค้าออก</button>
+  </div>
+</div>
+
+<!-- Over Scan Modal -->
+<div id="overModal" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:28px 32px;max-width:360px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.4);">
+    <div style="font-size:40px;margin-bottom:12px;">&#9888;&#65039;</div>
+    <div style="font-size:16px;font-weight:700;color:#dc2626;margin-bottom:8px;">สินค้าเกินจำนวน!</div>
+    <div id="overModalMsg" style="font-size:13px;color:#64748b;margin-bottom:20px;line-height:1.6;padding:10px;background:#fef2f2;border-radius:8px;"></div>
+    <div style="font-size:13px;color:#475569;margin-bottom:16px;">กดปุ่ม <strong style="color:#dc2626;">&#8722;</strong> ข้างรายการสินค้า เพื่อลดจำนวนออกครับ</div>
+    <button onclick="closeOverModal()" style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">รับทราบ &#8212; นำสินค้าออก</button>
   </div>
 </div>
 </body>
