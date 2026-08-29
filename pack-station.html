@@ -1165,26 +1165,29 @@ function exportPackLog() {
 }
 
 
-var _overSku = null;
 function showOverModal(overItems) {
   if (!overItems.length) return;
-  var it = overItems[0]; // ทีละรายการเสมอ
-  _overSku = it.sku;
+  var it = overItems[0];
   var excess = (scanned[it.sku]||0) - it.qty;
   document.getElementById('overModalMsg').innerHTML =
     it.name + '<br><strong>สแกน ' + (scanned[it.sku]||0) + ' / ต้องการ ' + it.qty + ' (เกิน ' + excess + ' หน่วย)</strong>';
+  // ฝัง sku ไว้ใน button โดยตรง
+  document.getElementById('overModalBtn').setAttribute('data-sku', it.sku);
   var m = document.getElementById('overModal');
   m.style.cssText = 'display:flex;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;';
   document.getElementById('scanInput').disabled = true;
 }
 function confirmOverRemoved() {
-  if (_overSku && scanned[_overSku] > 0) {
-    scanned[_overSku]--;
+  var btn = document.getElementById('overModalBtn');
+  var sku = btn ? btn.getAttribute('data-sku') : null;
+  console.log('[Over] confirmOverRemoved sku:', sku, 'scanned:', scanned[sku]);
+  if (sku && scanned[sku] > 0) {
+    scanned[sku]--;
+    console.log('[Over] reduced to:', scanned[sku]);
   }
   document.getElementById('overModal').style.display = 'none';
   document.getElementById('scanInput').disabled = false;
   stopErrorFlash();
-  _overSku = null;
   renderAll();
   checkDone();
   document.getElementById('scanInput').focus();
@@ -1258,7 +1261,7 @@ function confirmOverRemoved() {
     <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
     <div style="font-size:16px;font-weight:700;color:#dc2626;margin-bottom:8px;">สินค้าเกินจำนวน!</div>
     <div id="overModalMsg" style="font-family:monospace;font-size:13px;color:#555;margin-bottom:20px;padding:10px;background:#fef2f2;border-radius:8px;line-height:1.6;"></div>
-    <button onclick="confirmOverRemoved()" style="width:100%;padding:13px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;">เอาสินค้าที่เกินออกแล้ว !</button>
+    <button id="overModalBtn" onclick="confirmOverRemoved()" style="width:100%;padding:13px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;">เอาสินค้าที่เกินออกแล้ว !</button>
   </div>
 </div>
 </body>
