@@ -1045,7 +1045,7 @@ async function deductStock(inv) {
           name: it.name,
           barcode: it.sku,
           qty: it.qty,
-          piecesPerUnit: 1,
+          piecesPerUnit: it.piecesPerUnit || 1,
           channel: 'FlowAccount',
           ref: inv.serial,
           employee: currentEmployee || 'Pack Station'
