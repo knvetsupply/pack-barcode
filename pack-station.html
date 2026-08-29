@@ -552,6 +552,25 @@ function normalizeBarcode(raw) {
   return s.length > 15 ? s.substring(0, 15) : s;
 }
 
+var scanHistory = [];
+
+function removeOne(sku) {
+  if (!scanned[sku] || scanned[sku] <= 0) return;
+  scanned[sku]--;
+  // remove last matching from history
+  for (var hi = scanHistory.length - 1; hi >= 0; hi--) {
+    if (scanHistory[hi].sku === sku) { scanHistory.splice(hi, 1); break; }
+  }
+  var stillOver = invoice && invoice.items.some(function(it) { return (scanned[it.sku]||0) > it.qty; });
+  if (!stillOver) {
+    stopErrorFlash();
+    document.getElementById('overModal').style.display = 'none';
+  }
+  renderAll();
+  checkDone();
+  addLog('warn', sku, 'ลบออก 1 หน่วย');
+}
+
 function processScan(rawBarcode) {
   var barcode = normalizeBarcode(rawBarcode);
   if (!invoice) return;
@@ -577,6 +596,7 @@ function processScan(rawBarcode) {
   }
 
   scanned[item.sku] = (scanned[item.sku]||0) + 1;
+  scanHistory.push({sku: item.sku});
   _resetTimer();
   const cur = scanned[item.sku], req = item.qty;
 
@@ -1145,18 +1165,28 @@ function exportPackLog() {
 }
 
 
+var _overSku = null;
 function showOverModal(overItems) {
-  var msg = overItems.map(function(it) {
-    return it.name + '<br><strong>สแกน ' + (scanned[it.sku]||0) + ' / ต้องการ ' + it.qty + '</strong> (เกิน ' + ((scanned[it.sku]||0) - it.qty) + ' ชิ้น)';
-  }).join('<br><br>');
-  document.getElementById('overModalMsg').innerHTML = msg;
+  if (!overItems.length) return;
+  var it = overItems[0]; // ทีละรายการเสมอ
+  _overSku = it.sku;
+  var excess = (scanned[it.sku]||0) - it.qty;
+  document.getElementById('overModalMsg').innerHTML =
+    it.name + '<br><strong>สแกน ' + (scanned[it.sku]||0) + ' / ต้องการ ' + it.qty + ' (เกิน ' + excess + ' หน่วย)</strong>';
   var m = document.getElementById('overModal');
-  m.style.display = 'flex';
-  m.style.alignItems = 'center';
-  m.style.justifyContent = 'center';
+  m.style.cssText = 'display:flex;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;';
+  document.getElementById('scanInput').disabled = true;
 }
-function closeOverModal() {
+function confirmOverRemoved() {
+  if (_overSku && scanned[_overSku] > 0) {
+    scanned[_overSku]--;
+  }
   document.getElementById('overModal').style.display = 'none';
+  document.getElementById('scanInput').disabled = false;
+  stopErrorFlash();
+  _overSku = null;
+  renderAll();
+  checkDone();
   document.getElementById('scanInput').focus();
 }
 
@@ -1224,12 +1254,11 @@ function closeOverModal() {
 
 <!-- Over Scan Modal -->
 <div id="overModal" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:16px;padding:28px 32px;max-width:360px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.4);">
-    <div style="font-size:40px;margin-bottom:12px;">&#9888;&#65039;</div>
+  <div style="background:#fff;border-radius:16px;padding:28px 32px;max-width:340px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.5);">
+    <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
     <div style="font-size:16px;font-weight:700;color:#dc2626;margin-bottom:8px;">สินค้าเกินจำนวน!</div>
-    <div id="overModalMsg" style="font-size:13px;color:#64748b;margin-bottom:20px;line-height:1.6;padding:10px;background:#fef2f2;border-radius:8px;"></div>
-    <div style="font-size:13px;color:#475569;margin-bottom:16px;">กดปุ่ม <strong style="color:#dc2626;">&#8722;</strong> ข้างรายการสินค้า เพื่อลดจำนวนออกครับ</div>
-    <button onclick="closeOverModal()" style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">รับทราบ &#8212; นำสินค้าออก</button>
+    <div id="overModalMsg" style="font-family:monospace;font-size:13px;color:#555;margin-bottom:20px;padding:10px;background:#fef2f2;border-radius:8px;line-height:1.6;"></div>
+    <button onclick="confirmOverRemoved()" style="width:100%;padding:13px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;">เอาสินค้าที่เกินออกแล้ว !</button>
   </div>
 </div>
 </body>
