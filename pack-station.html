@@ -629,7 +629,9 @@ function checkDone() {
     showOverModal(overItems);
   } else if (!hasShort) {
     stopErrorFlash();
+    var _invSnap = invoice;
     endPackSession('✅ ครบ');
+    deductStock(_invSnap);
     setTimeout(() => {
       document.getElementById('ccSub').textContent = invoice.serial+' · '+invoice.items.length+' รายการ ครบถ้วนทั้งหมด';
       document.getElementById('completeOverlay').classList.add('show');
